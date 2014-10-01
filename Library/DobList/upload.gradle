@@ -1,0 +1,109 @@
+/*
+Usage: define 4 varibales. and apply this file as below in build.gradle.
+
+    archivesBaseName = 'doblist'
+    group = 'doblist'
+    version = '1.0.0-SNAPSHOT'
+
+    System.properties.repoUrl = 'http://REPOSITORY_URL'
+
+    apply from: 'this_file_path'
+
+    gradle uploadArchives
+ */
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+def repoUrl = System.properties['repoUrl'] == null ? 'http://dev1' : System.properties['repoUrl']
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+task apklib(type: Zip) {
+    dependsOn 'packageReleaseJar'
+    appendix = extension = 'apklib'
+
+    from 'AndroidManifest.xml'
+    into('res') {
+        from 'res'
+    }
+    into('src') {
+        from 'src'
+    }
+}
+
+configurations {
+    archives {
+        extendsFrom configurations.default
+    }
+}
+
+signing {
+    required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: repoUrl+'/nexus/content/repositories/releases/') {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            snapshotRepository(url: repoUrl+'/nexus/content/repositories/snapshots/') {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+
+            modifyPom(addFilter('aar') { artifact, file ->
+                artifact.name == archivesBaseName
+            })
+
+            // FIXME I can't upload apklib I don't know even if I declare "archives { apklib }".
+            modifyPom(addFilter('apklib') { artifact, file ->
+                artifact.name == archivesBaseName + '-apklib'
+            })
+
+            // There's no official apklib for Google Play services, so we
+            // can't really maintain that dependency for the apklib packaging.
+            pom('apklib').whenConfigured { pom ->
+                pom.dependencies = []
+            }
+        }
+    }
+}
+
+def modifyPom(pom) {
+    pom.project {
+        name archivesBaseName
+        description ''
+        url 'https://github.com/sh1nj1/'+archivesBaseName
+
+        scm {
+            url 'scm:git@github.com/sh1nj1/'+archivesBaseName+'.git'
+            connection 'scm:git@github.com/sh1nj1/'+archivesBaseName+'.git'
+            developerConnection 'scm:git@github.com/sh1nj1/'+archivesBaseName+'.git'
+        }
+
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+
+        /*
+        organization {
+            name 'Google Inc'
+            url 'http://developers.google.com/maps'
+        }
+
+        developers {
+            developer {
+                id 'livotov'
+                name 'Dmitri Livotov'
+                url 'https://github.com/livotov'
+            }
+        }
+        */
+    }
+}

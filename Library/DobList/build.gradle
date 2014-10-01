@@ -33,3 +33,12 @@ android {
         instrumentTest.java.srcDirs = ['tests/src']
     }
 }
+
+// To upload maven repository.
+
+archivesBaseName = 'doblist'
+group = 'doblist'
+version = '1.0.0-SNAPSHOT'
+
+apply from: 'upload.gradle'
+
