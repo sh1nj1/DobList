@@ -1,3 +1,4 @@
+*.iml
 .classpath
 .project
 .settings
@@ -5,3 +6,5 @@ bin
 gen
 .DS_Store
 local.properties
+out
+.idea
