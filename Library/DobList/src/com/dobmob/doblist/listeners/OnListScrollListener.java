@@ -1,8 +1,10 @@
 package com.dobmob.doblist.listeners;
 
+import android.util.Log;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 
+import com.dobmob.doblist.BuildConfig;
 import com.dobmob.doblist.controllers.DobListController;
 import com.dobmob.doblist.events.OnLoadMoreListener;
 
@@ -20,7 +22,17 @@ public class OnListScrollListener implements OnScrollListener {
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
 
-		if (totalItemCount - dobListController.getFooterViewsCount() == 0) {
+        if (BuildConfig.DEBUG) {
+            Log.d("DOBLIST", "totalItemCount=" + totalItemCount
+                    + ", firstVisibleItem=" + firstVisibleItem
+                    + ", visibleItemCount=" + visibleItemCount
+                    + ", footerViewCount=" + dobListController.getFooterViewsCount()
+                    + ", maxCount=" + dobListController.getMaxItemsCount()
+                    + ", hasMax=" + dobListController.isThereMaxItemsCount()
+                    + ", isLoading=" + dobListController.isLoading());
+        }
+
+        if (totalItemCount - dobListController.getFooterViewsCount() == 0) {
 			return;
 		}
 
